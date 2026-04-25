@@ -5,10 +5,10 @@ import type { RootStackParamList } from '../navigation/RootNavigator';
 
 type Props = StackScreenProps<RootStackParamList, 'Player'>;
 
-export default function PlayerScreen({ route }: Props) {
+export default function PlayerScreen(_props: Props) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>{route.params.series.title}</Text>
+      <Text>PlayerScreen (placeholder)</Text>
     </View>
   );
 }
