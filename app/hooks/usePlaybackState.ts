@@ -11,11 +11,7 @@ interface UsePlaybackStateResult {
 export function usePlaybackState(seriesId: string): UsePlaybackStateResult {
   const [lastEpisodeId, setLastEpisodeId] = useState<string | null>(null);
   const lastEpisodeIdRef = useRef<string | null>(null);
-
-  // Keep ref in sync for rollback
-  useEffect(() => {
-    lastEpisodeIdRef.current = lastEpisodeId;
-  }, [lastEpisodeId]);
+  lastEpisodeIdRef.current = lastEpisodeId; // sync during render — no lag
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +22,7 @@ export function usePlaybackState(seriesId: string): UsePlaybackStateResult {
         if (!cancelled && v) setLastEpisodeId(v);
       })
       .catch(err => {
-        console.warn('[usePlaybackState] Failed to load progress:', err);
+        if (!cancelled) console.warn('[usePlaybackState] Failed to load progress:', err);
       });
 
     return () => { cancelled = true; };
