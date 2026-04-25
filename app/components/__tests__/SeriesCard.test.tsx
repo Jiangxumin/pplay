@@ -42,3 +42,10 @@ it('calls onPress when tapped', () => {
   fireEvent.press(getByTestId('card'));
   expect(onPress).toHaveBeenCalledTimes(1);
 });
+
+it('falls back to raw id when lastEpisodeId is not in episodes', () => {
+  const { getByText } = render(
+    <SeriesCard series={series} baseURL="http://server:8080" lastEpisodeId="ep99" onPress={() => {}} />
+  );
+  expect(getByText('看到: ep99')).toBeTruthy();
+});
