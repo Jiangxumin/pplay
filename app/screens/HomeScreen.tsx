@@ -40,7 +40,7 @@ const CardWithProgress = React.memo(function CardWithProgress({
   );
 });
 
-export default function HomeScreen({ navigation }: Props) {
+export default function HomeScreen(_: Props) {
   const { width } = useWindowDimensions();
   const cols = numColumns(width);
   const { baseURL } = useServer();
