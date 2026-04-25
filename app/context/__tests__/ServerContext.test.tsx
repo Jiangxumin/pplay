@@ -17,6 +17,11 @@ function TestConsumer({ onPress }: { onPress: (ctx: ReturnType<typeof useServer>
 const wrap = (ui: React.ReactElement) =>
   render(<ServerProvider>{ui}</ServerProvider>);
 
+beforeEach(() => {
+  (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+  (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
+});
+
 it('starts with empty baseURL', async () => {
   const { findByTestId } = wrap(<TestConsumer onPress={() => {}} />);
   expect(await findByTestId('url')).toHaveTextContent('');
@@ -43,4 +48,20 @@ it('does not double-prepend http:// if already present', async () => {
   );
   await act(async () => { fireEvent.press(getByTestId('btn')); });
   expect(await findByTestId('url')).toHaveTextContent('http://192.168.1.10:8080');
+});
+
+it('does not prepend http:// if https:// is already present', async () => {
+  const { findByTestId, getByTestId } = wrap(
+    <TestConsumer onPress={ctx => ctx.setBaseURL('https://192.168.1.10:8080')} />
+  );
+  await act(async () => { fireEvent.press(getByTestId('btn')); });
+  expect(await findByTestId('url')).toHaveTextContent('https://192.168.1.10:8080');
+});
+
+it('ignores empty string input', async () => {
+  const { findByTestId, getByTestId } = wrap(
+    <TestConsumer onPress={ctx => ctx.setBaseURL('')} />
+  );
+  await act(async () => { fireEvent.press(getByTestId('btn')); });
+  expect(await findByTestId('url')).toHaveTextContent('');
 });
