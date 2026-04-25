@@ -46,7 +46,12 @@ it('shows error and retry button on fetch failure', async () => {
   (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
   const { findByText } = wrap(<HomeScreen navigation={nav} route={route} />);
   expect(await findByText(/无法连接服务器/)).toBeTruthy();
-  expect(await findByText('重试')).toBeTruthy();
+  const retryBtn = await findByText('重试');
+  expect(retryBtn).toBeTruthy();
+  // Press retry — verify a second fetch attempt is made
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: async () => MANIFEST });
+  fireEvent.press(retryBtn);
+  expect(await findByText('Number Blocks S1')).toBeTruthy();
 });
 
 it('shows empty state when manifest series is empty', async () => {

@@ -3,7 +3,9 @@ import {
   View, Text, FlatList, TouchableOpacity,
   useWindowDimensions, StyleSheet, SafeAreaView,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import type { StackScreenProps } from '@react-navigation/stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import type { Series } from '../types';
 import { useServer } from '../context/ServerContext';
@@ -20,14 +22,23 @@ function numColumns(width: number): number {
   return 2;
 }
 
-function CardWithProgress({ series, baseURL, onPress }: {
-  series: Series; baseURL: string; onPress: () => void;
+const CardWithProgress = React.memo(function CardWithProgress({
+  series,
+  baseURL,
+}: {
+  series: Series;
+  baseURL: string;
 }) {
   const { lastEpisodeId } = usePlaybackState(series.id);
-  return (
-    <SeriesCard series={series} baseURL={baseURL} lastEpisodeId={lastEpisodeId} onPress={onPress} />
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const handlePress = useCallback(
+    () => navigation.navigate('Player', { series }),
+    [navigation, series],
   );
-}
+  return (
+    <SeriesCard series={series} baseURL={baseURL} lastEpisodeId={lastEpisodeId} onPress={handlePress} />
+  );
+});
 
 export default function HomeScreen({ navigation }: Props) {
   const { width } = useWindowDimensions();
@@ -37,14 +48,10 @@ export default function HomeScreen({ navigation }: Props) {
   const [settingsVisible, setSettingsVisible] = useState(false);
 
   const renderItem = useCallback(({ item }: { item: Series }) => (
-    <View style={{ flex: 1, padding: 6 }}>
-      <CardWithProgress
-        series={item}
-        baseURL={baseURL}
-        onPress={() => navigation.navigate('Player', { series: item })}
-      />
+    <View style={styles.itemWrapper}>
+      <CardWithProgress series={item} baseURL={baseURL} />
     </View>
-  ), [baseURL, navigation]);
+  ), [baseURL]);
 
   const renderBody = () => {
     if (!baseURL) return (
@@ -99,6 +106,7 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   gear: { fontSize: 22 },
   grid: { padding: 6 },
+  itemWrapper: { flex: 1, padding: 6 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   hint: { color: '#8e8e93', fontSize: 16, textAlign: 'center' },
   hintSub: { color: '#636366', fontSize: 13 },
