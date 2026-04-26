@@ -19,8 +19,10 @@ type Props = StackScreenProps<RootStackParamList, 'Home'>;
 
 function numColumns(width: number, height: number): number {
   const isLandscape = width > height;
-  if (isLandscape) return 3;
-  return 2;
+  // Target card width ~200dp; clamp: landscape ≥3, portrait ≥2
+  const target = 200;
+  const cols = Math.floor(width / target);
+  return isLandscape ? Math.max(3, cols) : Math.max(2, cols);
 }
 
 const CardWithProgress = React.memo(function CardWithProgress({
