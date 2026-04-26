@@ -37,10 +37,12 @@ export default function VideoPlayer({ uri, onBack }: Props) {
   }, [player]);
 
   const toggleControls = useCallback(() => {
-    const next = !controlsVisible;
-    Animated.timing(opacity, { toValue: next ? 1 : 0, duration: 200, useNativeDriver: true }).start();
-    setControlsVisible(next);
-  }, [controlsVisible, opacity]);
+    setControlsVisible(prev => {
+      const next = !prev;
+      Animated.timing(opacity, { toValue: next ? 1 : 0, duration: 200, useNativeDriver: true }).start();
+      return next;
+    });
+  }, [opacity]);
 
   if (!uri) {
     return (
