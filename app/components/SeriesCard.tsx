@@ -18,7 +18,7 @@ export default function SeriesCard({ series, baseURL, lastEpisodeId, onPress, te
   return (
     <TouchableOpacity testID={testID} onPress={onPress} style={styles.card} activeOpacity={0.8}>
       <Image
-        source={{ uri: `${baseURL.replace(/\/$/, '')}/${series.cover}` }}
+        source={{ uri: `${baseURL}/${series.cover}` }}
         style={styles.cover}
         resizeMode="cover"
       />

@@ -25,7 +25,7 @@ export function ServerProvider({ children }: { children: ReactNode }) {
   const setBaseURL = useCallback(async (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) return;
-    const url = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+    const url = (/^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`).replace(/\/$/, '');
     const previous = baseURL;
     setBaseURLState(url);
     try {
