@@ -34,7 +34,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
     return (
       <View style={styles.landscape}>
         <View style={styles.videoArea}>
-          <VideoPlayer uri={videoUri} onBack={handleBack} />
+          <VideoPlayer key={videoUri} uri={videoUri} onBack={handleBack} />
         </View>
         <View style={styles.sidebar}>
           <EpisodeSidebar
@@ -51,7 +51,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
   return (
     <View style={styles.portrait}>
       <View style={styles.videoAreaPortrait}>
-        <VideoPlayer uri={videoUri} onBack={handleBack} />
+        <VideoPlayer key={videoUri} uri={videoUri} onBack={handleBack} />
       </View>
       <View style={styles.sidebarPortrait}>
         <EpisodeSidebar
