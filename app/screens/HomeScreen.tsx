@@ -17,9 +17,9 @@ import SettingsModal from '../components/SettingsModal';
 
 type Props = StackScreenProps<RootStackParamList, 'Home'>;
 
-function numColumns(width: number): number {
-  if (width > 900) return 4;
-  if (width > 600) return 3;
+function numColumns(width: number, height: number): number {
+  const isLandscape = width > height;
+  if (isLandscape) return 3;
   return 2;
 }
 
@@ -42,8 +42,8 @@ const CardWithProgress = React.memo(function CardWithProgress({
 });
 
 export default function HomeScreen(_: Props) {
-  const { width } = useWindowDimensions();
-  const cols = numColumns(width);
+  const { width, height } = useWindowDimensions();
+  const cols = numColumns(width, height);
   const { baseURL } = useServer();
   const { series, loading, error, refetch } = useSeriesList();
   const [settingsVisible, setSettingsVisible] = useState(false);
