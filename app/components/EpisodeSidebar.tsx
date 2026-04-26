@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { FlatList, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import type { Episode } from '../types';
 
@@ -8,32 +8,39 @@ interface Props {
   onSelect: (episode: Episode) => void;
 }
 
-export default function EpisodeSidebar({ episodes, currentEpisodeId, onSelect }: Props) {
+function EpisodeSidebar({ episodes, currentEpisodeId, onSelect }: Props) {
+  const renderItem = useCallback(({ item }: { item: Episode }) => {
+    const active = item.id === currentEpisodeId;
+    return (
+      <TouchableOpacity
+        testID={`episode-${item.id}-${active ? 'active' : 'inactive'}`}
+        style={[styles.item, active && styles.activeItem]}
+        onPress={() => onSelect(item)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.itemText, active && styles.activeText]} numberOfLines={2}>
+          {active ? '▶ ' : ''}{item.title}
+        </Text>
+      </TouchableOpacity>
+    );
+  }, [currentEpisodeId, onSelect]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>选集</Text>
       <FlatList
         data={episodes}
         keyExtractor={ep => ep.id}
-        renderItem={({ item }) => {
-          const active = item.id === currentEpisodeId;
-          return (
-            <TouchableOpacity
-              testID={`episode-${item.id}-${active ? 'active' : 'inactive'}`}
-              style={[styles.item, active && styles.activeItem]}
-              onPress={() => onSelect(item)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.itemText, active && styles.activeText]} numberOfLines={2}>
-                {active ? '▶ ' : ''}{item.title}
-              </Text>
-            </TouchableOpacity>
-          );
-        }}
+        renderItem={renderItem}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>暂无选集</Text>
+        }
       />
     </View>
   );
 }
+
+export default React.memo(EpisodeSidebar);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1c1c1e' },
@@ -42,4 +49,5 @@ const styles = StyleSheet.create({
   activeItem: { backgroundColor: '#0a2540' },
   itemText: { color: '#8e8e93', fontSize: 12 },
   activeText: { color: '#0a84ff', fontWeight: '600' },
+  emptyText: { color: '#636366', fontSize: 12, textAlign: 'center', marginTop: 20 },
 });

@@ -36,3 +36,10 @@ it('calls onSelect with the tapped episode', () => {
   fireEvent.press(getByText('第 03 集'));
   expect(onSelect).toHaveBeenCalledWith(episodes[2]);
 });
+
+it('shows empty state when episodes list is empty', () => {
+  const { getByText } = render(
+    <EpisodeSidebar episodes={[]} currentEpisodeId="" onSelect={() => {}} />
+  );
+  expect(getByText('暂无选集')).toBeTruthy();
+});
