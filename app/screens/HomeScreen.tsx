@@ -78,7 +78,7 @@ export default function HomeScreen(_: Props) {
     return (
       <FlatList
         data={series}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
         numColumns={cols}
         key={cols}
         renderItem={renderItem}

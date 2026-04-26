@@ -30,7 +30,7 @@ function EpisodeSidebar({ episodes, currentEpisodeId, onSelect }: Props) {
       <Text style={styles.header}>选集</Text>
       <FlatList
         data={episodes}
-        keyExtractor={ep => ep.id}
+        keyExtractor={(ep, index) => `${ep.id}-${index}`}
         renderItem={renderItem}
         ListEmptyComponent={
           <Text style={styles.emptyText}>暂无选集</Text>
