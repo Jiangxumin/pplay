@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   useWindowDimensions, StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackScreenProps } from '@react-navigation/stack';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
@@ -50,11 +50,20 @@ export default function HomeScreen(_: Props) {
   const { series, loading, error, refetch } = useSeriesList();
   const [settingsVisible, setSettingsVisible] = useState(false);
 
+  const isFirstMount = useRef(true);
+  useFocusEffect(useCallback(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    refetch();
+  }, [refetch]));
+
   const renderItem = useCallback(({ item }: { item: Series }) => (
-    <View style={styles.itemWrapper}>
+    <View style={[styles.itemWrapper, { width: `${100 / cols}%` }]}>
       <CardWithProgress series={item} baseURL={baseURL} />
     </View>
-  ), [baseURL]);
+  ), [baseURL, cols]);
 
   const renderBody = () => {
     if (!baseURL) return (
@@ -109,7 +118,7 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   gear: { fontSize: 22 },
   grid: { padding: 6 },
-  itemWrapper: { flex: 1, padding: 6 },
+  itemWrapper: { padding: 6 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   hint: { color: '#8e8e93', fontSize: 16, textAlign: 'center' },
   hintSub: { color: '#636366', fontSize: 13 },
