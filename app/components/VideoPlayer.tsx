@@ -1,14 +1,17 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   View, TouchableOpacity, Text, StyleSheet,
   TouchableWithoutFeedback, Animated,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   uri: string;
   onBack: () => void;
 }
+
+const CONTROLS_HIDE_DELAY = 3000;
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -17,8 +20,10 @@ function formatTime(seconds: number): string {
 }
 
 export default function VideoPlayer({ uri, onBack }: Props) {
+  const { bottom: safeBottom } = useSafeAreaInsets();
   const videoRef = useRef<VideoView>(null);
   const opacity = useRef(new Animated.Value(1)).current;
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -26,7 +31,23 @@ export default function VideoPlayer({ uri, onBack }: Props) {
 
   const player = useVideoPlayer(uri ? { uri } : null, p => { p?.play(); });
 
-  React.useEffect(() => {
+  const showControls = useCallback(() => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    setControlsVisible(true);
+    Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    hideTimer.current = setTimeout(() => {
+      setControlsVisible(false);
+      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+    }, CONTROLS_HIDE_DELAY);
+  }, [opacity]);
+
+  // Start auto-hide on mount
+  useEffect(() => {
+    showControls();
+    return () => { if (hideTimer.current) clearTimeout(hideTimer.current); };
+  }, [showControls]);
+
+  useEffect(() => {
     if (!player) return;
     const subs = [
       player.addListener('playingChange', ({ isPlaying: p }: any) => setIsPlaying(p)),
@@ -35,14 +56,6 @@ export default function VideoPlayer({ uri, onBack }: Props) {
     ];
     return () => subs.forEach(s => s.remove());
   }, [player]);
-
-  const toggleControls = useCallback(() => {
-    setControlsVisible(prev => {
-      const next = !prev;
-      Animated.timing(opacity, { toValue: next ? 1 : 0, duration: 200, useNativeDriver: true }).start();
-      return next;
-    });
-  }, [opacity]);
 
   if (!uri) {
     return (
@@ -56,9 +69,9 @@ export default function VideoPlayer({ uri, onBack }: Props) {
 
   return (
     <View style={styles.container}>
-      <TouchableWithoutFeedback onPress={toggleControls}>
+      <TouchableWithoutFeedback onPress={showControls}>
         <View style={styles.wrapper}>
-          <VideoView ref={videoRef} player={player} style={styles.video} contentFit="contain" />
+          <VideoView ref={videoRef} player={player} style={styles.video} contentFit="contain" nativeControls={false} />
 
           {/* Back — always visible above controls */}
           <TouchableOpacity testID="back-button" style={styles.backButton} onPress={onBack}>
@@ -66,7 +79,7 @@ export default function VideoPlayer({ uri, onBack }: Props) {
           </TouchableOpacity>
 
           {/* Controls overlay */}
-          <Animated.View style={[styles.controls, { opacity }]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
+          <Animated.View style={[styles.controls, { opacity, paddingBottom: 12 + safeBottom }]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { flex: progress }]} />
               <View style={[styles.progressRemainder, { flex: 1 - progress }]} />
