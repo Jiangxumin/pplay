@@ -4,6 +4,15 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
+jest.mock('react-native-safe-area-context', () => {
+  const insets = { top: 0, bottom: 0, left: 0, right: 0 };
+  return {
+    useSafeAreaInsets: () => insets,
+    SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
+    SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+
 const mockPlayer = () => ({
   play: jest.fn(),
   pause: jest.fn(),
