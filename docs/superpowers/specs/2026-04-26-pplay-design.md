@@ -18,14 +18,43 @@
 
 ## 2. 系统架构总览
 
+```bash
+## 树莓派 4B (192.168.1.12:8080)
+
+sudo tee etc/nginx/sites-enabled/pplay <<-'EOF'
+server {
+    listen 8080;
+    server_name _;
+
+    root /media/promote/cartoon;          # 改成你存放视频的根目录
+    autoindex on;                  # 自动生成目录索引（方便调试）
+    autoindex_exact_size off;      # 显示文件大小（人类可读）
+    autoindex_localtime on;        # 显示本地时间
+
+    location / {
+        # 支持跨域（如果需要APP来自不同端口）
+        add_header Access-Control-Allow-Origin "*";
+        # 支持 Range 请求（关键！）
+        add_header Accept-Ranges bytes;
+    }
+}
+EOF
+
+sudo ln -s /etc/nginx/sites-available/pplay /etc/nginx/sites-enabled/
+sudo nginx -t           # 测试配置语法
+sudo systemctl reload nginx   # 重新加载配置
+
+
 ```
-树莓派 4B (192.168.x.x:8080)
-    └── python3 -m http.server 8080
+/media/promote/cartoon
          ├── manifest.json
          └── <series-id>/
               ├── cover.jpg
               └── ep01.mp4, ep02.mp4, ...
+```
 
+
+```
 Android 设备
     └── PPlay (React Native Expo)
          ├── ServerContext  ← 管理 baseURL
@@ -41,8 +70,7 @@ Android 设备
 ### 3.1 运行方式
 
 ```bash
-cd /media/videos
-python3 -m http.server 8080
+sudo systemctl reload nginx   # 重新加载配置
 ```
 
 无需安装额外依赖，开箱即用。
@@ -50,7 +78,7 @@ python3 -m http.server 8080
 ### 3.2 目录结构
 
 ```
-/media/videos/
+/media/promote/cartoon
 ├── manifest.json
 ├── numberblocks-s1/
 │   ├── cover.jpg
