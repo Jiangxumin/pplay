@@ -26,7 +26,10 @@ export function useSeriesList(): UseSeriesListResult {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetch(`${baseURL}/manifest.json`)
+    // Cache-bust with a timestamp so repeated fetches (e.g. on foreground
+    // refresh) always hit the network instead of a stale cached response —
+    // some Android ROMs (e.g. HarmonyOS) cache GETs by URL.
+    fetch(`${baseURL}/manifest.json?t=${Date.now()}`)
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

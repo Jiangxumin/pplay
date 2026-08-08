@@ -83,3 +83,23 @@ it('refetch triggers a second fetch', async () => {
   await waitFor(() => expect(result.current.series).toHaveLength(1));
   expect(global.fetch).toHaveBeenCalledTimes(2);
 });
+
+it('cache-busts the manifest URL so repeated fetches are never stale', async () => {
+  (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce('http://192.168.1.1:8080');
+  (global.fetch as jest.Mock)
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ series: [] }) })
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ series: [] }) });
+  // Make Date.now() return a fresh value each call so the two fetches get
+  // distinct cache-bust params (deterministic; avoids same-ms collisions).
+  let t = 1_000_000;
+  const dateSpy = jest.spyOn(Date, 'now').mockImplementation(() => (t += 1000));
+  const { result } = renderHook(() => useSeriesList(), { wrapper });
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  act(() => result.current.refetch());
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+  dateSpy.mockRestore();
+  const urls = (global.fetch as jest.Mock).mock.calls.map((c: unknown[]) => c[0] as string);
+  expect(urls[0]).toMatch(/\/manifest\.json\?t=\d+$/);
+  expect(urls[1]).toMatch(/\/manifest\.json\?t=\d+$/);
+  expect(urls[0]).not.toBe(urls[1]); // distinct URLs → defeats URL-keyed caching
+});

@@ -76,7 +76,14 @@ it('refetches the manifest when the app returns to the foreground', async () => 
   const addSpy = jest.spyOn(AppState, 'addEventListener').mockImplementation(
     (event: any, handler: any) => {
       if (event === 'change') changeHandlers.push(handler);
-      return { remove: jest.fn() } as any;
+      return {
+        // Honor removal so the array mirrors a real subscription lifecycle
+        // (the effect re-subscribes when baseURL changes and removes the old one).
+        remove: () => {
+          const i = changeHandlers.indexOf(handler);
+          if (i >= 0) changeHandlers.splice(i, 1);
+        },
+      } as any;
     },
   );
 

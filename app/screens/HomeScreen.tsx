@@ -50,6 +50,7 @@ export default function HomeScreen(_: Props) {
   const { baseURL } = useServer();
   const { series, loading, error, refetch } = useSeriesList();
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const lastForegroundAt = useRef(0);
 
   const isFirstMount = useRef(true);
   useFocusEffect(useCallback(() => {
@@ -60,25 +61,31 @@ export default function HomeScreen(_: Props) {
     refetch();
   }, [refetch]));
 
-  // Refresh the catalog when the app returns to the foreground — i.e. when it
-  // regains focus or after screen lock/unlock. (Navigation focus, e.g. coming
-  // back from the player, is already handled by useFocusEffect above.)
-  // Also best-effort stop LittleEars (same-host audio system, port 3000) so its
-  // sound doesn't overlap with playback here.
+  // Refresh the catalog + best-effort stop LittleEars when the app returns to
+  // the foreground (regains focus / after lock-unlock). Listen to BOTH 'change'
+  // (activity resume) and 'focus' (window focus, Android) because on some ROMs
+  // 'change' is unreliable while 'focus' may still fire. A throttle dedupes the
+  // two when both fire. Navigation focus (back from the player) is already
+  // handled by useFocusEffect above.
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        refetch();
-        stopLittleEars(baseURL);
-      }
+    const onForeground = () => {
+      const now = Date.now();
+      if (now - lastForegroundAt.current < 1500) return; // dedupe change+focus
+      lastForegroundAt.current = now;
+      refetch();
+      stopLittleEars(baseURL);
+    };
+    const subChange = AppState.addEventListener('change', (s) => {
+      if (s === 'active') onForeground();
     });
+    const subFocus = AppState.addEventListener('focus', onForeground);
     // Cold start: AppState begins 'active' with no 'change' event, so the
-    // listener above would not fire — stop LittleEars once on mount. (The
+    // listeners above would not fire — stop LittleEars once on mount. (The
     // manifest is already fetched on mount by useSeriesList, so no refetch here.)
     if (AppState.currentState === 'active') {
       stopLittleEars(baseURL);
     }
-    return () => subscription.remove();
+    return () => { subChange.remove(); subFocus.remove(); };
   }, [refetch, baseURL]);
 
   const renderItem = useCallback(({ item }: { item: Series }) => (
