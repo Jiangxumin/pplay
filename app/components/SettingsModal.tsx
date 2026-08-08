@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView } from 'react-native';
 import { useServer } from '../context/ServerContext';
 
 interface Props {
@@ -39,7 +39,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView style={styles.overlay} behavior="padding">
         <View style={styles.box}>
           <Text style={styles.label}>服务器地址</Text>
           <TextInput
@@ -61,7 +61,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
             <Text style={styles.buttonText}>保存</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
