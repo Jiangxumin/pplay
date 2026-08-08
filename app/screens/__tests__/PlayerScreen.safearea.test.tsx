@@ -6,17 +6,18 @@ import PlayerScreen from '../PlayerScreen';
 import { ServerProvider } from '../../context/ServerContext';
 import type { Series } from '../../types';
 
-// Notched device: 44dp top inset (status bar + punch-hole camera).
+// All insets nonzero so we can tell which sides each orientation applies.
 jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 44, bottom: 0, left: 0, right: 0 }),
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 11, right: 22 }),
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
   SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-// Portrait phone so the portrait branch renders.
+// Mutable so one file can exercise both the portrait and landscape branches.
+const mockDims = { width: 390, height: 844 };
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
-  default: () => ({ width: 390, height: 844 }),
+  default: () => mockDims,
 }));
 
 const series: Series = {
@@ -39,19 +40,37 @@ function flattenStyle(style: unknown): Record<string, number | string> {
   return (style as Record<string, number | string>) ?? {};
 }
 
-beforeEach(() => {
-  (AsyncStorage.getItem as jest.Mock).mockReset();
-  (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-});
-
-it('pushes the portrait video below the top notch (paddingTop = safeTop)', () => {
-  const { getByTestId } = render(
+function renderScreen() {
+  return render(
     <NavigationContainer>
       <ServerProvider>
         <PlayerScreen navigation={nav} route={route} />
       </ServerProvider>
     </NavigationContainer>,
   );
+}
+
+beforeEach(() => {
+  (AsyncStorage.getItem as jest.Mock).mockReset();
+  (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+  mockDims.width = 390;
+  mockDims.height = 844;
+});
+
+it('portrait: applies top + bottom insets (notch above, gesture nav below)', () => {
+  const { getByTestId } = renderScreen();
   const style = flattenStyle(getByTestId('player-portrait').props.style);
   expect(style.paddingTop).toBe(44);
+  expect(style.paddingBottom).toBe(34);
+});
+
+it('landscape: applies all four insets (side cutout + status/gesture bars)', () => {
+  mockDims.width = 844;
+  mockDims.height = 390;
+  const { getByTestId } = renderScreen();
+  const style = flattenStyle(getByTestId('player-landscape').props.style);
+  expect(style.paddingTop).toBe(44);
+  expect(style.paddingBottom).toBe(34);
+  expect(style.paddingLeft).toBe(11);
+  expect(style.paddingRight).toBe(22);
 });
