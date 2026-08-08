@@ -68,6 +68,11 @@ App 只与一个静态服务器通信，其 URL 由用户在运行时输入（`b
 组件/hook/页面测试与代码并列放在就近的 `__tests__/` 目录下。测试依赖 `testID` props（如 `back-button`、`play-pause-button`、`episode-<id>-active`）——请继续为可交互元素添加 `testID`。`@testing-library/jest-native` 的匹配器在 `jest.setup.ts` 中被全局扩展。
 
 ## 约定
-- **提交信息：** 约定式提交（conventional commits），scope 可选 —— `feat(player): …`、`fix(HomeScreen): …`、`chore: …`、`docs: …`。
+- **提交信息：** 约定式提交（conventional commits），scope 可选 —— `feat(player): …`、`fix(HomeScreen): …`、`chore: …`、`docs: …`。**提交信息一律用中文书写**（类型前缀 `feat`/`fix` 等保留英文，冒号后的描述用中文）。
+- **Git 身份：** 本仓库使用**本地** git 身份覆盖全局配置。首次克隆/拉取后执行一次：
+  ```bash
+  git config --local user.name cjiangxumin
+  git config --local user.email cjiangxumin@gmail.com
+  ```
 - **TypeScript：** `strict: true`。类型优先使用 `type` 导入（`import type {…}`）——代码库一贯如此。
 - **状态回滚模式：** 两个会写持久化的 hook（`ServerContext.setBaseURL`、`usePlaybackState.saveProgress`）都是先乐观更新状态，在 AsyncStorage 失败时再回滚——新增持久化状态时请遵循此模式。
