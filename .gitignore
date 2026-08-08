@@ -42,3 +42,9 @@ yarn-error.*
 /android
 .superpowers/
 *.apk
+
+# editor
+*.swp
+*.swo
+*.sw~
+.todo_list.md.swp
