@@ -20,7 +20,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function VideoPlayer({ uri, onBack }: Props) {
-  const { bottom: safeBottom } = useSafeAreaInsets();
+  const { bottom: safeBottom, left: safeLeft, right: safeRight } = useSafeAreaInsets();
   const videoRef = useRef<VideoView>(null);
   const opacity = useRef(new Animated.Value(1)).current;
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,13 +73,13 @@ export default function VideoPlayer({ uri, onBack }: Props) {
         <View style={styles.wrapper}>
           <VideoView ref={videoRef} player={player} style={styles.video} contentFit="contain" nativeControls={false} />
 
-          {/* Back — always visible above controls */}
-          <TouchableOpacity testID="back-button" style={styles.backButton} onPress={onBack}>
+          {/* Back — top inset is handled at the screen level (PlayerScreen pushes the video below the notch); here we only offset the left edge clear of a side cutout */}
+          <TouchableOpacity testID="back-button" style={[styles.backButton, { top: 12, left: 12 + safeLeft }]} onPress={onBack}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
 
           {/* Controls overlay */}
-          <Animated.View style={[styles.controls, { opacity, paddingBottom: 12 + safeBottom }]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
+          <Animated.View style={[styles.controls, { opacity, paddingLeft: 12 + safeLeft, paddingRight: 12 + safeRight, paddingBottom: 12 + safeBottom }]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { flex: progress }]} />
               <View style={[styles.progressRemainder, { flex: 1 - progress }]} />
@@ -106,9 +106,9 @@ const styles = StyleSheet.create({
   video: { flex: 1 },
   errorContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000' },
   errorText: { color: '#ff453a', fontSize: 16 },
-  backButton: { position: 'absolute', top: 12, left: 12, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  backButton: { position: 'absolute', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   backText: { color: '#fff', fontSize: 18 },
-  controls: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 12, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.6)' },
+  controls: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)' },
   progressTrack: { flexDirection: 'row', height: 3, marginBottom: 8, borderRadius: 2, overflow: 'hidden' },
   progressFill: { backgroundColor: '#0a84ff' },
   progressRemainder: { backgroundColor: '#3a3a3c' },

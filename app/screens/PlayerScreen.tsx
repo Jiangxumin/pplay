@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, useWindowDimensions, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { StackScreenProps } from '@react-navigation/stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import type { Episode } from '../types';
@@ -16,6 +17,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const { lastEpisodeId, saveProgress } = usePlaybackState(series.id);
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+  const { top: safeTop } = useSafeAreaInsets();
 
   const currentEpisodeId = lastEpisodeId ?? series.episodes[0]?.id ?? '';
   const currentEpisode = series.episodes.find(e => e.id === currentEpisodeId) ?? series.episodes[0];
@@ -49,7 +51,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
 
   // Portrait: video top (16:9), sidebar below
   return (
-    <View style={styles.portrait}>
+    <View testID="player-portrait" style={[styles.portrait, { paddingTop: safeTop }]}>
       <View style={styles.videoAreaPortrait}>
         <VideoPlayer key={videoUri} uri={videoUri} onBack={handleBack} />
       </View>
