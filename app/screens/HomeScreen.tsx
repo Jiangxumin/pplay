@@ -14,6 +14,7 @@ import { useSeriesList } from '../hooks/useSeriesList';
 import { usePlaybackState } from '../hooks/usePlaybackState';
 import SeriesCard from '../components/SeriesCard';
 import SettingsModal from '../components/SettingsModal';
+import { stopLittleEars } from '../utils/littleEars';
 
 type Props = StackScreenProps<RootStackParamList, 'Home'>;
 
@@ -62,14 +63,23 @@ export default function HomeScreen(_: Props) {
   // Refresh the catalog when the app returns to the foreground — i.e. when it
   // regains focus or after screen lock/unlock. (Navigation focus, e.g. coming
   // back from the player, is already handled by useFocusEffect above.)
+  // Also best-effort stop LittleEars (same-host audio system, port 3000) so its
+  // sound doesn't overlap with playback here.
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
         refetch();
+        stopLittleEars(baseURL);
       }
     });
+    // Cold start: AppState begins 'active' with no 'change' event, so the
+    // listener above would not fire — stop LittleEars once on mount. (The
+    // manifest is already fetched on mount by useSeriesList, so no refetch here.)
+    if (AppState.currentState === 'active') {
+      stopLittleEars(baseURL);
+    }
     return () => subscription.remove();
-  }, [refetch]);
+  }, [refetch, baseURL]);
 
   const renderItem = useCallback(({ item }: { item: Series }) => (
     <View style={[styles.itemWrapper, { width: `${100 / cols}%` }]}>
