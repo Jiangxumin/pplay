@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { AppState } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeScreen from '../HomeScreen';
@@ -59,4 +60,29 @@ it('shows empty state when manifest series is empty', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: async () => ({ series: [] }) });
   const { findByText } = wrap(<HomeScreen navigation={nav} route={route} />);
   expect(await findByText('暂无视频')).toBeTruthy();
+});
+
+it('refetches the manifest when the app returns to the foreground', async () => {
+  (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce('http://192.168.1.1:8080');
+  (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => MANIFEST });
+
+  const changeHandlers: Array<(state: string) => void> = [];
+  const addSpy = jest.spyOn(AppState, 'addEventListener').mockImplementation(
+    (event: any, handler: any) => {
+      if (event === 'change') changeHandlers.push(handler);
+      return { remove: jest.fn() } as any;
+    },
+  );
+
+  const { unmount } = wrap(<HomeScreen navigation={nav} route={route} />);
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1)); // initial load
+
+  // Simulate the app coming back to the foreground (regained focus / lock-unlock).
+  act(() => {
+    changeHandlers.forEach(h => h('active'));
+  });
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2)); // initial + foreground refresh
+
+  unmount();
+  addSpy.mockRestore();
 });

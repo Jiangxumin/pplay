@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  useWindowDimensions, StyleSheet,
+  useWindowDimensions, StyleSheet, AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -58,6 +58,18 @@ export default function HomeScreen(_: Props) {
     }
     refetch();
   }, [refetch]));
+
+  // Refresh the catalog when the app returns to the foreground — i.e. when it
+  // regains focus or after screen lock/unlock. (Navigation focus, e.g. coming
+  // back from the player, is already handled by useFocusEffect above.)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        refetch();
+      }
+    });
+    return () => subscription.remove();
+  }, [refetch]);
 
   const renderItem = useCallback(({ item }: { item: Series }) => (
     <View style={[styles.itemWrapper, { width: `${100 / cols}%` }]}>
